@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
@@ -145,20 +144,22 @@ app.post("/api/copilot/chat", authenticateToken as any, async (req, res) => {
 // If it's running locally via `npm run dev` or `npm start`
 if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
   const PORT = Number(process.env.PORT || 3000);
-  createViteServer({
-    server: { middlewareMode: true },
-    appType: "spa",
-  }).then(vite => {
-    app.use(vite.middlewares);
-    
-    // Global Error Handler
-    app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-      logger.error({ err, method: req.method, path: req.path }, 'Unhandled Exception');
-      res.status(500).json({ error: 'Internal Server Error' });
-    });
+  import('vite').then(({ createServer: createViteServer }) => {
+    createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    }).then(vite => {
+      app.use(vite.middlewares);
+      
+      // Global Error Handler
+      app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+        logger.error({ err, method: req.method, path: req.path }, 'Unhandled Exception');
+        res.status(500).json({ error: 'Internal Server Error' });
+      });
 
-    app.listen(PORT, "0.0.0.0", () => {
-      logger.info(`Server running on http://localhost:${PORT}`);
+      app.listen(PORT, "0.0.0.0", () => {
+        logger.info(`Server running on http://localhost:${PORT}`);
+      });
     });
   });
 } else if (!process.env.VERCEL) {
