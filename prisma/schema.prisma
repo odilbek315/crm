@@ -1,0 +1,212 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  
+  users     User[]
+  customers Customer[]
+  leads     Lead[]
+  deals     Deal[]
+  tasks     Task[]
+  documents Document[]
+  employees Employee[]
+  auditLogs AuditLog[]
+
+  @@index([deletedAt])
+  @@index([createdAt])
+}
+
+model User {
+  id             String       @id @default(uuid())
+  email          String       @unique
+  passwordHash   String
+  name           String
+  role           String       @default("USER")
+  emailVerified  Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sessions       Session[]
+
+  @@index([organizationId])
+  @@index([deletedAt])
+  @@index([organizationId, createdAt])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  id         String   @id @default(uuid())
+  identifier String
+  token      String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([identifier])
+}
+
+model Customer {
+  id             String       @id @default(uuid())
+  name           String
+  email          String
+  phone          String?
+  company        String?
+  status         String       @default("Active")
+  value          Float        @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deals          Deal[]
+
+  @@index([organizationId])
+  @@unique([organizationId, email])
+  @@index([deletedAt])
+  @@index([organizationId, createdAt])
+  @@index([name])
+  @@index([company])
+}
+
+model Lead {
+  id             String       @id @default(uuid())
+  name           String
+  email          String
+  company        String?
+  source         String?
+  status         String       @default("New")
+  score          Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([organizationId, email])
+  @@index([deletedAt])
+  @@index([organizationId, createdAt])
+}
+
+model Deal {
+  id             String       @id @default(uuid())
+  title          String
+  value          Float        @default(0)
+  stage          String       @default("Prospecting")
+  expectedClose  DateTime?
+  customerId     String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  customer       Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([deletedAt])
+  @@index([organizationId, createdAt])
+}
+
+model Task {
+  id             String       @id @default(uuid())
+  title          String
+  description    String?
+  status         String       @default("TODO")
+  priority       String       @default("MEDIUM")
+  dueDate        DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+  @@index([organizationId, createdAt])
+}
+
+model Document {
+  id             String       @id @default(uuid())
+  title          String
+  type           String       @default("PDF")
+  size           Int          @default(0)
+  url            String?
+  status         String       @default("Active")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([deletedAt])
+  @@index([organizationId, createdAt])
+}
+
+model Employee {
+  id             String       @id @default(uuid())
+  name           String
+  email          String
+  department     String?
+  role           String?
+  status         String       @default("Active")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([organizationId, email])
+  @@index([deletedAt])
+  @@index([organizationId, createdAt])
+}
+
+model AuditLog {
+  id             String       @id @default(uuid())
+  userId         String
+  action         String
+  entityType     String
+  entityId       String
+  changes        String?
+  timestamp      DateTime     @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, timestamp])
+  @@index([organizationId, entityType])
+}

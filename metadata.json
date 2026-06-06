@@ -1,0 +1,6 @@
+{
+  "name": "Market ERP",
+  "description": "Enterprise CRM and ERP dashboard with comprehensive management modules.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
