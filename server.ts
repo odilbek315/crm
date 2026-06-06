@@ -1,4 +1,4 @@
-import { app } from './src/server/app';
+import { app } from './src/server/app.js';
 import path from 'path';
 import express from 'express';
 import pino from 'pino';

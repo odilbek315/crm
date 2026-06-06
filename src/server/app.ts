@@ -8,16 +8,16 @@ import pinoHttp from 'pino-http';
 import pino from 'pino';
 import crypto from 'crypto';
 import { z } from 'zod';
-import { authRouter } from './routes/auth';
-import { customersRouter } from './routes/customers';
-import { leadsRouter } from './routes/leads';
-import { dealsRouter } from './routes/deals';
-import { tasksRouter } from './routes/tasks';
-import { documentsRouter } from './routes/documents';
-import { employeesRouter } from './routes/employees';
-import { adminRouter } from './routes/admin';
-import { auditRouter } from './routes/audit';
-import { authenticateToken } from './middleware/auth';
+import { authRouter } from './routes/auth.js';
+import { customersRouter } from './routes/customers.js';
+import { leadsRouter } from './routes/leads.js';
+import { dealsRouter } from './routes/deals.js';
+import { tasksRouter } from './routes/tasks.js';
+import { documentsRouter } from './routes/documents.js';
+import { employeesRouter } from './routes/employees.js';
+import { adminRouter } from './routes/admin.js';
+import { auditRouter } from './routes/audit.js';
+import { authenticateToken } from './middleware/auth.js';
 import { GoogleGenAI } from '@google/genai';
 
 const logger = pino({
