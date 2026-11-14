@@ -60,7 +60,7 @@ export function SettingsPage() {
               <CardContent className="space-y-6">
                 <div className="flex items-center gap-6 pb-6 border-b border-white/10">
                   <div className="size-20 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 text-white font-display text-2xl font-bold backdrop-blur-md">
-                     ME
+                     B2B
                   </div>
                   <div>
                      <Button className="bg-white/10 hover:bg-white/20 text-white border border-white/10 mb-2">Upload Logo</Button>
@@ -71,11 +71,11 @@ export function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white/80">Company Name</label>
-                    <Input defaultValue="Market ERP Inc." className="bg-black/40 border-white/10 text-white" />
+                    <Input defaultValue="B2B CRM Inc." className="bg-black/40 border-white/10 text-white" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white/80">Support Email</label>
-                    <Input defaultValue="support@market-erp.com" className="bg-black/40 border-white/10 text-white" />
+                    <Input defaultValue="support@b2b-crm.uz" className="bg-black/40 border-white/10 text-white" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white/80">Primary Currency</label>

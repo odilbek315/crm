@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './lib/core/auth/AuthContext';
 import { TenantProvider } from './lib/core/tenant/TenantContext';
 import { ProtectedRoute } from './lib/core/security/Guards';
+import { I18nProvider } from './lib/i18n';
 import { AuthLayout } from './pages/auth/AuthLayout';
 
 const queryClient = new QueryClient();
@@ -69,72 +70,70 @@ const GlobalLoader = () => (
   </div>
 );
 
-import { ToastProvider } from './components/ui/Toast';
-
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <TenantProvider>
-            <ToastProvider>
-              <Suspense fallback={<GlobalLoader />}>
-                <Routes>
-                  {/* Public Auth Routes */}
-                  <Route path="/auth" element={<AuthLayout />}>
-                    <Route index element={<Navigate to="/auth/login" replace />} />
-                    <Route path="login" element={<LoginPage />} />
-                    <Route path="register" element={<RegisterPage />} />
-                    <Route path="forgot-password" element={<ForgotPasswordPage />} />
-                  </Route>
+          <I18nProvider>
+            <TenantProvider>
+            <Suspense fallback={<GlobalLoader />}>
+            <Routes>
+              {/* Public Auth Routes */}
+              <Route path="/auth" element={<AuthLayout />}>
+                <Route index element={<Navigate to="/auth/login" replace />} />
+                <Route path="login" element={<LoginPage />} />
+                <Route path="register" element={<RegisterPage />} />
+                <Route path="forgot-password" element={<ForgotPasswordPage />} />
+              </Route>
 
-                  {/* Protected App Routes */}
-                  <Route element={<ProtectedRoute />}>
-                    <Route path="/" element={<DashboardLayout />}>
-                      <Route index element={<DashboardPage />} />
-                      <Route path="intelligence" element={<IntelligencePage />} />
-                      <Route path="war-room" element={<WarRoomPage />} />
-                      <Route path="system-health" element={<SystemHealthPage />} />
-                      <Route path="knowledge" element={<KnowledgePage />} />
-                      <Route path="marketplace" element={<MarketplacePage />} />
-                      <Route path="developer" element={<DeveloperCenterPage />} />
-                      <Route path="builder" element={<EcosystemBuilderPage />} />
-                      <Route path="analytics" element={<AnalyticsPage />} />
-                      <Route path="observability" element={<ObservabilityPage />} />
-                      <Route path="security" element={<SecurityCenterPage />} />
-                      <Route path="graph" element={<BusinessGraphPage />} />
-                      <Route path="decisions" element={<DecisionEnginePage />} />
-                      <Route path="copilot" element={<ExecutiveCopilotPage />} />
-                      <Route path="success" element={<CustomerSuccessPage />} />
-                      <Route path="process-mining" element={<ProcessMiningPage />} />
-                      <Route path="digital-twin" element={<DigitalTwinPage />} />
-                      <Route path="org-health" element={<OrgHealthPage />} />
-                      <Route path="adoption" element={<AdoptionAnalyticsPage />} />
-                      <Route path="leads" element={<LeadsPage />} />
-                      <Route path="leads/:id" element={<LeadDetailPage />} />
-                      <Route path="customers" element={<CustomersPage />} />
-                      <Route path="customers/:id" element={<CustomerDetailPage />} />
-                      <Route path="sales" element={<SalesPage />} />
-                      <Route path="deals/:id" element={<DealDetailPage />} />
-                      <Route path="tasks" element={<TasksPage />} />
-                      <Route path="hr" element={<HRPage />} />
-                      <Route path="warehouse" element={<WarehousePage />} />
-                      <Route path="finance" element={<FinancePage />} />
-                      <Route path="documents" element={<DocumentsPage />} />
-                      <Route path="reports" element={<ReportsPage />} />
-                      <Route path="settings" element={<SettingsPage />} />
-                      <Route path="workflows" element={<WorkflowsPage />} />
-                      <Route path="audit" element={<AuditLogPage />} />
-                      <Route path="approvals" element={<ApprovalsPage />} />
-                      <Route path="activity" element={<ActivityPage />} />
-                    </Route>
-                  </Route>
-                </Routes>
-              </Suspense>
-            </ToastProvider>
-          </TenantProvider>
-        </AuthProvider>
-      </BrowserRouter>
+              {/* Protected App Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<DashboardLayout />}>
+                  <Route index element={<DashboardPage />} />
+                  <Route path="intelligence" element={<IntelligencePage />} />
+                  <Route path="war-room" element={<WarRoomPage />} />
+                  <Route path="system-health" element={<SystemHealthPage />} />
+                  <Route path="knowledge" element={<KnowledgePage />} />
+                  <Route path="marketplace" element={<MarketplacePage />} />
+                  <Route path="developer" element={<DeveloperCenterPage />} />
+                  <Route path="builder" element={<EcosystemBuilderPage />} />
+                  <Route path="analytics" element={<AnalyticsPage />} />
+                  <Route path="observability" element={<ObservabilityPage />} />
+                  <Route path="security" element={<SecurityCenterPage />} />
+                  <Route path="graph" element={<BusinessGraphPage />} />
+                  <Route path="decisions" element={<DecisionEnginePage />} />
+                  <Route path="copilot" element={<ExecutiveCopilotPage />} />
+                  <Route path="success" element={<CustomerSuccessPage />} />
+                  <Route path="process-mining" element={<ProcessMiningPage />} />
+                  <Route path="digital-twin" element={<DigitalTwinPage />} />
+                  <Route path="org-health" element={<OrgHealthPage />} />
+                  <Route path="adoption" element={<AdoptionAnalyticsPage />} />
+                  <Route path="leads" element={<LeadsPage />} />
+                  <Route path="leads/:id" element={<LeadDetailPage />} />
+                  <Route path="customers" element={<CustomersPage />} />
+                  <Route path="customers/:id" element={<CustomerDetailPage />} />
+                  <Route path="sales" element={<SalesPage />} />
+                  <Route path="deals/:id" element={<DealDetailPage />} />
+                  <Route path="tasks" element={<TasksPage />} />
+                  <Route path="hr" element={<HRPage />} />
+                  <Route path="warehouse" element={<WarehousePage />} />
+                  <Route path="finance" element={<FinancePage />} />
+                  <Route path="documents" element={<DocumentsPage />} />
+                  <Route path="reports" element={<ReportsPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="workflows" element={<WorkflowsPage />} />
+                  <Route path="audit" element={<AuditLogPage />} />
+                  <Route path="approvals" element={<ApprovalsPage />} />
+                  <Route path="activity" element={<ActivityPage />} />
+                </Route>
+              </Route>
+            </Routes>
+          </Suspense>
+            </TenantProvider>
+          </I18nProvider>
+      </AuthProvider>
+    </BrowserRouter>
     </QueryClientProvider>
   );
 }

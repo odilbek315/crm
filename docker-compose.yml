@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  crm-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crm-production-container
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persistent volume mount for the SQLite database and schema configuration
+      - prisma-db-volume:/app/prisma
+    env_file:
+      - .env
+    environment:
+      - PORT=3000
+      - DATABASE_URL=file:./dev.db
+      - GEMINI_API_KEY
+    restart: unless-stopped
+
+volumes:
+  # Volume definition for database persistence across rebuilds and restarts
+  prisma-db-volume:

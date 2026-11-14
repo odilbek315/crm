@@ -25,7 +25,7 @@ export default function RegisterPage() {
       navigate('/');
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.error || "Ro'yxatdan o'tish muvaffaqiyatsiz tugadi");
+      setError(err.response?.data?.error || 'Failed to register');
     } finally {
       setLoading(false);
     }
@@ -34,9 +34,9 @@ export default function RegisterPage() {
   return (
     <>
       <div className="mb-8">
-        <h2 className="text-3xl font-display font-bold text-white tracking-tight">Tashkilot yaratish</h2>
+        <h2 className="text-3xl font-display font-bold text-white tracking-tight">Create Organization</h2>
         <p className="mt-2 text-sm text-white/50">
-          Yangi ijara va administrator hisobini ta'minlash.
+          Provision a new tenant and administrator account.
         </p>
       </div>
 
@@ -46,12 +46,12 @@ export default function RegisterPage() {
           <div className="space-y-4">
             
             <div className="space-y-2">
-              <label className="text-sm font-medium text-white/80">Tashkilot nomi</label>
+              <label className="text-sm font-medium text-white/80">Organization Name</label>
               <div className="relative">
                 <Input 
                   required 
                   className="pl-10 bg-black/40 border-white/10 text-white placeholder:text-white/30"
-                  placeholder="Acme Korporatsiyasi"
+                  placeholder="Acme Corp"
                   value={orgName}
                   onChange={e => setOrgName(e.target.value)}
                 />
@@ -60,12 +60,12 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-white/80">Administratorning to'liq ismi</label>
+              <label className="text-sm font-medium text-white/80">Admin Full Name</label>
               <div className="relative">
                 <Input 
                   required 
                   className="pl-10 bg-black/40 border-white/10 text-white placeholder:text-white/30"
-                  placeholder="Ali Valiyev"
+                  placeholder="Jane Doe"
                   value={name}
                   onChange={e => setName(e.target.value)}
                 />
@@ -74,13 +74,13 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-white/80">Ish elektron pochta manzili</label>
+              <label className="text-sm font-medium text-white/80">Work Email address</label>
               <div className="relative">
                 <Input 
                   type="email" 
                   required 
                   className="pl-10 bg-black/40 border-white/10 text-white placeholder:text-white/30"
-                  placeholder="ali@acme.com"
+                  placeholder="jane@acme.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                 />
@@ -89,7 +89,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-white/80">Parol</label>
+              <label className="text-sm font-medium text-white/80">Password</label>
               <div className="relative">
                 <Input 
                   type="password" 
@@ -98,7 +98,7 @@ export default function RegisterPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  minLength={8}
+                  minLength={6}
                 />
                 <Lock className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
               </div>
@@ -110,15 +110,15 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full bg-white/10 text-white border border-white/20 hover:bg-white/20 flex justify-between items-center px-4"
           >
-            <span className="font-medium">{loading ? 'Ta\'minlanmoqda...' : 'Ta\'minlashni so\'rash'}</span>
+            <span className="font-medium">{loading ? 'Provisioning...' : 'Request Provisioning'}</span>
             <ArrowRight className="size-4" />
           </Button>
         </form>
 
         <div className="mt-8 text-center text-sm text-white/50">
-           Hisobingiz bormi?{' '}
+           Already have an account?{' '}
            <Link to="/auth/login" className="font-medium text-white hover:text-sky-400 transition-colors">
-             Bu yerdan kiring
+             Sign in here
            </Link>
         </div>
       </div>

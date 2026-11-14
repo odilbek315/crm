@@ -14,90 +14,112 @@ const employeeSchema = z.object({
   status: z.string().optional()
 });
 
+// GET /api/employees
 router.get('/', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page as string) || 1);
-    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit as string) || 50));
-    const skip = (page - 1) * limit;
-
-    const where = {
-      organizationId: req.user!.organizationId,
-      deletedAt: null
-    };
-
-    const [employees, total] = await Promise.all([
-      prisma.employee.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit
-      }),
-      prisma.employee.count({ where })
-    ]);
-
-    res.json({
-      data: employees,
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) }
+    const orgId = req.user!.organizationId;
+    const employees = await prisma.employee.findMany({
+      where: {
+        organizationId: orgId,
+        deletedAt: null
+      },
+      orderBy: { createdAt: 'desc' }
     });
+    res.json(employees);
   } catch (error) {
+    console.error('Fetch employees error:', error);
     res.status(500).json({ error: 'Failed to fetch employees' });
   }
 });
 
-router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const employee = await prisma.employee.findFirst({
-      where: { id: req.params.id, organizationId: req.user!.organizationId, deletedAt: null }
-    });
-    if (!employee) return res.status(404).json({ error: 'Employee not found' });
-    res.json(employee);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch employee' });
-  }
-});
-
+// POST /api/employees
 router.post('/', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = employeeSchema.parse(req.body);
+    const orgId = req.user!.organizationId;
+
     const employee = await prisma.employee.create({
-      data: { ...data, organizationId: req.user!.organizationId }
+      data: {
+        ...data,
+        organizationId: orgId
+      }
     });
+
     res.status(201).json(employee);
   } catch (error) {
-    if (error instanceof z.ZodError) res.status(400).json({ error: error.issues });
-    else res.status(500).json({ error: 'Failed to create employee' });
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.issues });
+    } else {
+      console.error('Create employee error:', error);
+      res.status(500).json({ error: 'Failed to create employee' });
+    }
   }
 });
 
+// PATCH /api/employees/:id
 router.patch('/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const { id } = req.params;
     const data = employeeSchema.partial().parse(req.body);
-    const existing = await prisma.employee.findFirst({
-      where: { id: req.params.id, organizationId: req.user!.organizationId, deletedAt: null }
-    });
-    if (!existing) return res.status(404).json({ error: 'Employee not found' });
+    const orgId = req.user!.organizationId;
 
-    const employee = await prisma.employee.update({ where: { id: req.params.id }, data });
-    res.json(employee);
+    const existing = await prisma.employee.findFirst({
+      where: {
+        id,
+        organizationId: orgId,
+        deletedAt: null
+      }
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    const updated = await prisma.employee.update({
+      where: { id },
+      data: {
+        ...data,
+        updatedAt: new Date()
+      }
+    });
+
+    res.json(updated);
   } catch (error) {
-    if (error instanceof z.ZodError) res.status(400).json({ error: error.issues });
-    else res.status(500).json({ error: 'Failed to update employee' });
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.issues });
+    } else {
+      console.error('Update employee error:', error);
+      res.status(500).json({ error: 'Failed to update employee' });
+    }
   }
 });
 
+// DELETE /api/employees/:id
 router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const existing = await prisma.employee.findFirst({
-      where: { id: req.params.id, organizationId: req.user!.organizationId, deletedAt: null }
-    });
-    if (!existing) return res.status(404).json({ error: 'Employee not found' });
+    const { id } = req.params;
+    const orgId = req.user!.organizationId;
 
-    await prisma.employee.update({ 
-      where: { id: req.params.id },
+    const existing = await prisma.employee.findFirst({
+      where: {
+        id,
+        organizationId: orgId,
+        deletedAt: null
+      }
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    await prisma.employee.update({
+      where: { id },
       data: { deletedAt: new Date() }
     });
+
     res.status(204).send();
   } catch (error) {
+    console.error('Delete employee error:', error);
     res.status(500).json({ error: 'Failed to delete employee' });
   }
 });

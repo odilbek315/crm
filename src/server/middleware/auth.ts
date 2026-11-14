@@ -1,72 +1,67 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
+import { prisma } from '../prisma';
 
-const isProduction = process.env.NODE_ENV === 'production';
-const generatedDevJwtSecret = crypto.randomBytes(32).toString('hex');
-const generatedDevRefreshSecret = crypto.randomBytes(32).toString('hex');
-
-function getSecret(name: 'JWT_SECRET' | 'REFRESH_SECRET', developmentSecret: string) {
-  const value = process.env[name];
-  const isPlaceholder = !value || value.startsWith('YOUR_') || value.startsWith('MY_') || value.length < 32;
-
-  if (isPlaceholder && isProduction) {
-    throw new Error(`${name} must be configured with at least 32 characters in production`);
-  }
-
-  if (isPlaceholder) {
-    console.warn(`${name} is not configured securely; using an ephemeral development-only secret`);
-    return developmentSecret;
-  }
-
-  return value;
-}
-
-const JWT_SECRET = getSecret('JWT_SECRET', generatedDevJwtSecret);
-const REFRESH_SECRET = getSecret('REFRESH_SECRET', generatedDevRefreshSecret);
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-development';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
+    id: string;
     userId: string;
-    organizationId: string;
+    email: string;
     role: string;
+    organizationId: string;
   };
 }
 
 export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
-  const [scheme, token] = typeof authHeader === 'string' ? authHeader.split(' ') : [];
+  const token = authHeader && authHeader.split(' ')[1];
 
-  if (scheme !== 'Bearer' || !token) return res.status(401).json({ error: 'Access token required' });
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized: Access token required' });
+  }
 
-  jwt.verify(token, JWT_SECRET, {
-    algorithms: ['HS256'],
-    audience: 'market-erp-api',
-    issuer: 'market-erp',
-  }, (err: any, user: any) => {
-    if (err) return res.status(403).json({ error: 'Invalid or expired token' });
-    req.user = user as any;
+  jwt.verify(token, JWT_SECRET, async (err: any, decoded: any) => {
+    if (err) {
+      return res.status(403).json({ error: 'Forbidden: Invalid or expired token' });
+    }
+    
+    // Attach the parsed identity to the request
+    req.user = {
+      id: decoded.id || decoded.userId,
+      userId: decoded.userId || decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+      organizationId: decoded.organizationId,
+    };
+    
+    // Verify that the organization still exists in the database
+    try {
+      const orgExists = await prisma.organization.findUnique({
+        where: { id: decoded.organizationId }
+      });
+      if (!orgExists) {
+        return res.status(401).json({ error: 'Unauthorized: Organization no longer exists. Please log in again.' });
+      }
+    } catch (dbErr) {
+      console.error('Auth middleware DB verification error:', dbErr);
+    }
+    
     next();
   });
 };
 
-export const generateToken = (userId: string, organizationId: string, role: string) => {
-  return jwt.sign({ sub: userId, userId, organizationId, role }, JWT_SECRET, {
-    algorithm: 'HS256',
-    audience: 'market-erp-api',
-    issuer: 'market-erp',
-    expiresIn: '15m',
-  });
-};
-
-export const generateRefreshToken = () => {
-  return crypto.randomBytes(48).toString('base64url');
-};
-
-export const hashRefreshToken = (refreshToken: string) => {
-  return crypto.createHmac('sha256', REFRESH_SECRET).update(refreshToken).digest('hex');
-};
-
-export const hashOneTimeToken = (token: string) => {
-  return crypto.createHash('sha256').update(token).digest('hex');
+export const generateToken = (userId: string, organizationId: string, role: string, email: string) => {
+  return jwt.sign(
+    { 
+      id: userId,
+      userId, 
+      organizationId, 
+      role, 
+      email 
+    }, 
+    JWT_SECRET, 
+    { expiresIn: '7d' }
+  );
 };

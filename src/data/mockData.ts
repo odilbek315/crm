@@ -4,11 +4,11 @@ import { subDays, format } from 'date-fns';
 const now = new Date();
 
 export const mockUsers: User[] = [
-  { id: 'u1', name: 'Alex Thompson', email: 'alex@market-erp.com', role: 'Administrator', avatarUrl: 'https://i.pravatar.cc/150?u=u1', status: 'Active' },
-  { id: 'u2', name: 'Sarah Chen', email: 'sarah@market-erp.com', role: 'Sales Manager', avatarUrl: 'https://i.pravatar.cc/150?u=u2', status: 'Active' },
-  { id: 'u3', name: 'James Wilson', email: 'james@market-erp.com', role: 'Warehouse Manager', avatarUrl: 'https://i.pravatar.cc/150?u=u3', status: 'Offline' },
-  { id: 'u4', name: 'Maria Garcia', email: 'maria@market-erp.com', role: 'HR Manager', avatarUrl: 'https://i.pravatar.cc/150?u=u4', status: 'Active' },
-  { id: 'u5', name: 'David Kim', email: 'david@market-erp.com', role: 'Accountant', avatarUrl: 'https://i.pravatar.cc/150?u=u5', status: 'Offline' },
+  { id: 'u1', name: 'Alex Thompson', email: 'alex@b2b-crm.uz', role: 'Administrator', avatarUrl: 'https://i.pravatar.cc/150?u=u1', status: 'Active' },
+  { id: 'u2', name: 'Sarah Chen', email: 'sarah@b2b-crm.uz', role: 'Sales Manager', avatarUrl: 'https://i.pravatar.cc/150?u=u2', status: 'Active' },
+  { id: 'u3', name: 'James Wilson', email: 'james@b2b-crm.uz', role: 'Warehouse Manager', avatarUrl: 'https://i.pravatar.cc/150?u=u3', status: 'Offline' },
+  { id: 'u4', name: 'Maria Garcia', email: 'maria@b2b-crm.uz', role: 'HR Manager', avatarUrl: 'https://i.pravatar.cc/150?u=u4', status: 'Active' },
+  { id: 'u5', name: 'David Kim', email: 'david@b2b-crm.uz', role: 'Accountant', avatarUrl: 'https://i.pravatar.cc/150?u=u5', status: 'Offline' },
 ];
 
 export const mockLeads: Lead[] = Array.from({ length: 50 }).map((_, i) => ({
@@ -77,7 +77,7 @@ export const mockEmployees: Employee[] = Array.from({ length: 20 }).map((_, i) =
   name: `Employee Name ${i}`,
   position: ['Developer', 'Designer', 'Sales Rep', 'Support', 'Manager'][i % 5],
   department: ['Engineering', 'Design', 'Sales', 'Customer Success', 'Management'][i % 5],
-  email: `emp${i}@market-erp.com`,
+  email: `emp${i}@b2b-crm.uz`,
   joinDate: format(subDays(now, Math.floor(Math.random() * 1000)), 'yyyy-MM-dd'),
   status: Math.random() > 0.1 ? 'Active' : 'On Leave',
   salary: 50000 + (Math.random() * 70000),
@@ -108,7 +108,7 @@ export const mockNotifications = [
   { id: 'n1', title: 'New lead assigned', description: 'Global Corp Solutions has been assigned to you.', timestamp: '10 min ago', read: false, type: 'Lead' },
   { id: 'n2', title: 'Invoice Paid', description: 'Invoice #inv1240 was paid by Customer 14.', timestamp: '1 hour ago', read: false, type: 'Finance' },
   { id: 'n3', title: 'Meeting Reminder', description: 'Review Q3 proposals with the Sales Team.', timestamp: '2 hours ago', read: true, type: 'Task' },
-  { id: 'n4', title: 'System Update', description: 'Market ERP v2.4 has been successfully deployed.', timestamp: '1 day ago', read: true, type: 'System' },
+  { id: 'n4', title: 'System Update', description: 'B2B CRM v1.0 muvaffaqiyatli ishga tushirildi.', timestamp: '1 day ago', read: true, type: 'System' },
 ];
 
 export const dashboardStats = {

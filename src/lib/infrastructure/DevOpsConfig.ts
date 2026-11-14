@@ -7,14 +7,14 @@ export const InfrastructureArchitecture = {
   DockerCompose: `version: '3.8'
 services:
   api:
-    image: market-erp-backend:latest
+    image: b2b-crm-backend:latest
     deploy:
       replicas: 5
     environment:
       - DATABASE_URL=postgres://...
       - REDIS_URL=redis://...
   worker:
-    image: market-erp-worker:latest
+    image: b2b-crm-worker:latest
     deploy:
       replicas: 10
   redis:
@@ -25,20 +25,20 @@ services:
   Kubernetes: `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: market-erp-core
+  name: b2b-crm-core
 spec:
   replicas: 12
   selector:
     matchLabels:
-      app: market-erp
+      app: b2b-crm
   template:
     metadata:
       labels:
-        app: market-erp
+        app: b2b-crm
     spec:
       containers:
       - name: api
-        image: gcr.io/market/erp:prod
+        image: gcr.io/b2b/crm:prod
         resources:
           limits:
             cpu: "2"

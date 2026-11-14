@@ -100,7 +100,7 @@ export function DeveloperCenterPage() {
                  </div>
                  <pre className="text-xs font-mono text-emerald-300 overflow-x-auto">
                    <code>
-<span className="text-pink-400">curl</span> -X POST https://api.market-erp.local/v1/crm/leads \<br/>
+<span className="text-pink-400">curl</span> -X POST https://api.b2b-crm.uz/v1/crm/leads \<br/>
   -H <span className="text-amber-300">"Authorization: Bearer pk_live_..."</span> \<br/>
   -H <span className="text-amber-300">"Content-Type: application/json"</span> \<br/>
   -d <span className="text-sky-300">'{'{'} "companyName": "Acme", "email": "contact@acme.com" {'}'}'</span>

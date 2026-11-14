@@ -1,20 +1,49 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# B2B CRM
 
-# Run and deploy your AI Studio app
+A premium, modern Customer Relationship Management (CRM) platform designed to streamline business operations, automate workflows, and provide real-time analytical insights.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/0b7a5004-e785-4b7f-b2e6-e099cef33540
+- **Dashboard Layout:** Rich statistics, activity overview, and system status metrics.
+- **Customer & Lead Management:** Comprehensive database of customers, deals pipeline, and action-oriented detail pages.
+- **AI-Powered Insights:** Interactive Decision Engine, Executive Copilot, and process mining tools.
+- **Workflow & Automation:** Visual ecosystem builder and process workflow automation system.
+- **Security & Observability:** Real-time system monitoring, audit logs, and security center.
 
-## Run Locally
+## Getting Started
 
-**Prerequisites:**  Node.js
+### Prerequisites
 
+- [Node.js](https://nodejs.org/) (v18 or higher recommended)
+- [Prisma](https://www.prisma.io/) database setup
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Installation
+
+1. Clone the repository and navigate to the project directory:
+   ```bash
+   git clone https://github.com/odilbek315/crm.git
+   cd crm
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up your environment variables:
+   Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Initialize the Prisma database:
+   ```bash
+   npx prisma db push
+   ```
+
+5. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+The application will be running locally at `http://localhost:3000`.

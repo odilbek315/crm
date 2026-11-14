@@ -6,7 +6,7 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 
 const mockApps = [
-  { id: '1', name: 'Advanced HR Analytics', vendor: 'Market ERP Inc.', rating: 4.8, type: 'Official', inst: true, desc: 'Deep analytics and attrition prediction for HR.' },
+  { id: '1', name: 'Advanced HR Analytics', vendor: 'B2B CRM Inc.', rating: 4.8, type: 'Official', inst: true, desc: 'Deep analytics and attrition prediction for HR.' },
   { id: '2', name: 'Stripe Billing Sync', vendor: 'FinTech Solutions', rating: 4.9, type: 'Verified', inst: false, desc: 'Two-way sync between ERP Invoices and Stripe.' },
   { id: '3', name: 'Zendesk Connector', vendor: 'SupportCloud', rating: 4.5, type: 'Verified', inst: false, desc: 'Bind support tickets to CRM customers automatically.' },
   { id: '4', name: 'Jira Project Link', vendor: 'AgileTools', rating: 4.2, type: 'Community', inst: true, desc: 'Link sales deals to engineering tasks.' },
@@ -22,7 +22,7 @@ export function MarketplacePage() {
           <h1 className="text-3xl font-display font-bold tracking-tight text-white glow-text flex items-center gap-3">
             <Store className="size-8 text-sky-400" /> App Marketplace
           </h1>
-          <p className="text-white/60 mt-1 text-sm">Extend Market ERP with plugins, connectors, and intelligence modules.</p>
+          <p className="text-white/60 mt-1 text-sm">Extend B2B CRM with plugins, connectors, and intelligence modules.</p>
         </div>
         <div className="flex items-center gap-3">
            <Button variant="outline" className="border-white/10 text-white/70 hover:text-white bg-transparent">

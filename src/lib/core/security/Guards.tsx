@@ -22,9 +22,8 @@ export function ProtectedRoute() {
 
 export function PermissionGuard({ requiredRole, children }: { requiredRole: string; children: React.ReactNode }) {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'Administrator' || user?.role === 'ADMIN';
   
-  if (!user || (!isAdmin && user.role !== requiredRole)) {
+  if (!user || (user.role !== 'Administrator' && user.role !== requiredRole)) {
     return null; // Don't render content if unauthorized
   }
 

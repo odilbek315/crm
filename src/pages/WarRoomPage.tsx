@@ -1,40 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { AIEngine } from '../lib/core/ai/AIEngine';
 import { useTenant } from '../lib/core/tenant/TenantContext';
-import { Presentation, TrendingUp, Users, DollarSign, Target, Activity, ShieldAlert, ArrowUpRight, ArrowDownRight, Briefcase, RefreshCcw, Loader2 } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { useToast } from '../components/ui/Toast';
+import { Presentation, TrendingUp, Users, DollarSign, Target, Activity, ShieldAlert, ArrowUpRight, ArrowDownRight, Briefcase } from 'lucide-react';
 
 export function WarRoomPage() {
   const { currentTenant } = useTenant();
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [healthScore, setHealthScore] = useState(92);
-  const { toast } = useToast();
-  
   const insights = AIEngine.getInsights(currentTenant?.id || 'org-1');
   const ceoInsight = insights.find(i => i.agentRole === 'CEOAssistant');
-
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      setHealthScore(Math.floor(Math.random() * (99 - 85 + 1) + 85));
-      toast({
-        title: "Tizim Yangilandi",
-        description: "Barcha ko'rsatkichlar sun'iy intellekt tomonidan qayta hisoblab chiqildi.",
-        type: "success"
-      });
-    }, 2000);
-  };
-
-  const handleAlertDismiss = (id: string) => {
-    toast({
-      title: "Alert Dismissed",
-      description: "Ogohlantirish e'tiborsiz qoldirildi va arxivlandi.",
-      type: "info"
-    });
-  };
 
   return (
     <div className="space-y-6 flex flex-col h-full">
@@ -43,22 +16,12 @@ export function WarRoomPage() {
           <h1 className="text-4xl font-display font-bold tracking-tight text-white glow-text uppercase">Executive War Room</h1>
           <p className="text-purple-300 mt-1 text-sm font-mono tracking-widest uppercase">CEO Command Center • Global Overview</p>
         </div>
-        <div className="flex gap-4 items-center">
-           <Button 
-             variant="outline" 
-             size="sm" 
-             onClick={handleRefresh} 
-             disabled={isRefreshing}
-             className="border-white/10 text-white/70 hover:text-white bg-transparent h-10 px-4"
-           >
-             {isRefreshing ? <Loader2 className="size-4 mr-2 animate-spin" /> : <RefreshCcw className="size-4 mr-2" />}
-             Live Sync
-           </Button>
-           <div className="text-right border-l border-white/10 pl-4">
+        <div className="flex gap-4">
+           <div className="text-right">
              <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Company Health Score</p>
              <div className="flex items-center gap-2 justify-end text-emerald-400">
                 <Activity className="size-6" />
-                <span className="text-3xl font-display font-bold transition-all">{healthScore}</span><span className="text-xl text-white/30">/100</span>
+                <span className="text-3xl font-display font-bold">92</span><span className="text-xl text-white/30">/100</span>
              </div>
            </div>
         </div>
@@ -109,11 +72,7 @@ export function WarRoomPage() {
                      { name: 'Global Tech Migration', val: '$85k', prob: 75, risk: 'Med' },
                      { name: 'Stark Ind. License', val: '$200k', prob: 45, risk: 'High' }
                    ].map((opp, i) => (
-                     <div 
-                       key={i} 
-                       className="flex justify-between items-center p-3 bg-black/40 rounded-lg border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
-                       onClick={() => toast({ title: opp.name, description: `Win Probability: ${opp.prob}%. CRM orqali sotuv menejeriga xabar yuborildi.` })}
-                     >
+                     <div key={i} className="flex justify-between items-center p-3 bg-black/40 rounded-lg border border-white/5">
                         <div>
                           <p className="text-sm font-medium text-white">{opp.name}</p>
                           <div className="flex items-center gap-3 mt-1.5 text-xs">
@@ -154,7 +113,7 @@ export function WarRoomPage() {
                      <div className="h-full bg-amber-500 w-[76%]" />
                    </div>
 
-                   <div className="mt-6 p-4 rounded-lg bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-colors cursor-pointer" onClick={() => toast({ title: "HR Action Taken", description: "Savdo jamoasi rahbari bilan yig'ilish belgilandi.", type: "success" })}>
+                   <div className="mt-6 p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
                      <p className="text-xs font-semibold text-purple-300 uppercase tracking-wider mb-1">AI Recommendation</p>
                      <p className="text-sm text-purple-200/70">Sales team showing signs of quota fatigue. Consider adjusting Q4 targets to maintain morale.</p>
                    </div>
@@ -173,11 +132,7 @@ export function WarRoomPage() {
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto custom-scrollbar space-y-4">
                  {insights.filter(i => i.type === 'Risk' || i.type === 'Alert').map(insight => (
-                   <div 
-                     key={insight.id} 
-                     className="p-3 border-l-2 border-red-500 bg-black/40 shadow-sm hover:bg-black/60 cursor-pointer transition-colors"
-                     onClick={() => handleAlertDismiss(insight.id)}
-                   >
+                   <div key={insight.id} className="p-3 border-l-2 border-red-500 bg-black/40 shadow-sm">
                      <p className="text-sm font-medium text-white mb-1">{insight.title}</p>
                      <p className="text-xs text-white/60">{insight.description}</p>
                    </div>
@@ -197,16 +152,16 @@ export function WarRoomPage() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between items-end">
-                    <div className="h-24 w-1/5 bg-white/10 rounded-t-sm hover:bg-white/20 transition-colors relative group cursor-pointer" onClick={() => toast({ title: "Q1 Results", description: "Q1 Revenue: $850k" })}>
+                    <div className="h-24 w-1/5 bg-white/10 rounded-t-sm hover:bg-white/20 transition-colors relative group">
                       <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 text-[10px] text-white">Q1</div>
                     </div>
-                    <div className="h-32 w-1/5 bg-white/10 rounded-t-sm hover:bg-white/20 transition-colors relative group cursor-pointer" onClick={() => toast({ title: "Q2 Results", description: "Q2 Revenue: $1.1M" })}>
+                    <div className="h-32 w-1/5 bg-white/10 rounded-t-sm hover:bg-white/20 transition-colors relative group">
                       <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 text-[10px] text-white">Q2</div>
                     </div>
-                    <div className="h-20 w-1/5 bg-white/10 rounded-t-sm hover:bg-white/20 transition-colors relative group cursor-pointer" onClick={() => toast({ title: "Q3 Results", description: "Q3 Revenue: $750k (Dip due to seasonality)" })}>
+                    <div className="h-20 w-1/5 bg-white/10 rounded-t-sm hover:bg-white/20 transition-colors relative group">
                       <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 text-[10px] text-white">Q3</div>
                     </div>
-                    <div className="h-40 w-1/5 bg-sky-500/50 rounded-t-sm hover:bg-sky-500/60 transition-colors relative group border-t-2 border-sky-400 cursor-pointer" onClick={() => toast({ title: "Q4 Projection", description: "Q4 Projected: $1.5M" })}>
+                    <div className="h-40 w-1/5 bg-sky-500/50 rounded-t-sm hover:bg-sky-500/60 transition-colors relative group border-t-2 border-sky-400">
                       <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 text-[10px] text-sky-300">Q4 (Proj)</div>
                     </div>
                   </div>

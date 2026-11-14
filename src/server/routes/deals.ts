@@ -2,154 +2,242 @@ import { Router, Response } from 'express';
 import { prisma } from '../prisma';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 import { z } from 'zod';
+import { GoogleGenAI } from '@google/genai';
+import { workflowEngine } from '../services/workflowEngine';
 
 const router = Router();
+
+// Apply auth middleware to all deals routes
 router.use(authenticateToken as any);
 
-const dealSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  value: z.number().optional(),
-  stage: z.string().optional(),
-  expectedClose: z.string().optional().nullable().transform(val => val ? new Date(val) : null),
-  customerId: z.string().optional().nullable()
+const stageUpdateSchema = z.object({
+  stage: z.string().min(1, 'Stage is required'),
+  notes: z.string().optional().nullable()
 });
 
-const dealInclude = {
-  customer: {
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      company: true,
-      status: true,
-      value: true,
-      createdAt: true,
-      updatedAt: true,
-      deletedAt: true,
-      organizationId: true,
-    },
-  },
-};
-
-function sanitizeDealCustomer<T extends { customer?: { organizationId: string } | null }>(
-  deal: T,
-  organizationId: string,
-) {
-  return {
-    ...deal,
-    customer: deal.customer?.organizationId === organizationId ? deal.customer : null,
-  };
-}
-
-async function assertCustomerInOrganization(customerId: string | null | undefined, organizationId: string) {
-  if (!customerId) return;
-
-  const customer = await prisma.customer.findFirst({
-    where: {
-      id: customerId,
-      organizationId,
-      deletedAt: null,
-    },
-    select: { id: true },
-  });
-
-  if (!customer) {
-    throw new Error('CUSTOMER_NOT_FOUND');
-  }
-}
-
-router.get('/', async (req: AuthenticatedRequest, res: Response) => {
+// GET /api/deals/kanban - Fetch multi-tenant scoped deals
+router.get('/kanban', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page as string) || 1);
-    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit as string) || 50));
-    const skip = (page - 1) * limit;
+    const organizationId = req.user!.organizationId;
 
-    const where = {
-      organizationId: req.user!.organizationId,
-      deletedAt: null
-    };
-
-    const [deals, total] = await Promise.all([
-      prisma.deal.findMany({
-        where,
-        include: dealInclude,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit
-      }),
-      prisma.deal.count({ where })
-    ]);
-
-    res.json({
-      data: deals.map(deal => sanitizeDealCustomer(deal, req.user!.organizationId)),
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) }
+    const deals = await prisma.deal.findMany({
+      where: {
+        organizationId,
+        deletedAt: null
+      },
+      include: {
+        customer: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
+
+    res.json(deals);
   } catch (error) {
+    console.error('Fetch deals error:', error);
     res.status(500).json({ error: 'Failed to fetch deals' });
   }
 });
 
-router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
+// GET /api/deals/:id/history - Retrieve transition history from AuditLog
+router.get('/:id/history', async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const { id } = req.params;
+    const organizationId = req.user!.organizationId;
+
+    // Check if the deal exists and belongs to the organization
     const deal = await prisma.deal.findFirst({
-      where: { id: req.params.id, organizationId: req.user!.organizationId, deletedAt: null },
-      include: dealInclude
+      where: {
+        id,
+        organizationId,
+        deletedAt: null
+      }
     });
-    if (!deal) return res.status(404).json({ error: 'Deal not found' });
-    res.json(sanitizeDealCustomer(deal, req.user!.organizationId));
+
+    if (!deal) {
+      return res.status(404).json({ error: 'Deal not found' });
+    }
+
+    // Fetch audit logs related to this deal
+    const auditLogs = await prisma.auditLog.findMany({
+      where: {
+        organizationId,
+        entityType: 'Deal',
+        entityId: id,
+        action: 'UPDATE_DEAL_STAGE'
+      },
+      orderBy: {
+        timestamp: 'desc'
+      }
+    });
+
+    // Parse the changes field from each log
+    const history = auditLogs.map(log => {
+      let parsedChanges = null;
+      try {
+        if (log.changes) {
+          parsedChanges = JSON.parse(log.changes);
+        }
+      } catch (e) {
+        parsedChanges = log.changes;
+      }
+      return {
+        id: log.id,
+        userId: log.userId,
+        timestamp: log.timestamp,
+        action: log.action,
+        changes: parsedChanges
+      };
+    });
+
+    res.json(history);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch deal' });
+    console.error('Fetch deal history error:', error);
+    res.status(500).json({ error: 'Failed to fetch deal history' });
   }
 });
 
-router.post('/', async (req: AuthenticatedRequest, res: Response) => {
+// PATCH /api/deals/:id/stage - Update stage, record audit log, call Gemini AI
+router.patch('/:id/stage', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const data = dealSchema.parse(req.body);
-    await assertCustomerInOrganization(data.customerId, req.user!.organizationId);
-    const deal = await prisma.deal.create({
-      data: { ...data, organizationId: req.user!.organizationId }
+    const { id } = req.params;
+    const { stage, notes } = stageUpdateSchema.parse(req.body);
+    const userId = req.user!.id;
+    const organizationId = req.user!.organizationId;
+
+    // Run within a Prisma transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Fetch deal to verify tenant isolation and get previous stage/value
+      const existingDeal = await tx.deal.findFirst({
+        where: {
+          id,
+          organizationId,
+          deletedAt: null
+        },
+        include: {
+          customer: true
+        }
+      });
+
+      if (!existingDeal) {
+        throw new Error('DEAL_NOT_FOUND');
+      }
+
+      const previousStage = existingDeal.stage;
+
+      // 2. Update the deal's stage in the database
+      const updatedDeal = await tx.deal.update({
+        where: { id },
+        data: {
+          stage,
+          updatedAt: new Date()
+        },
+        include: {
+          customer: true
+        }
+      });
+
+      // 3. Write details to AuditLog
+      const auditLog = await tx.auditLog.create({
+        data: {
+          userId,
+          action: 'UPDATE_DEAL_STAGE',
+          entityType: 'Deal',
+          entityId: id,
+          changes: JSON.stringify({
+            previousStage,
+            newStage: stage,
+            notes: notes || '',
+            dealTitle: existingDeal.title,
+            dealValue: existingDeal.value
+          }),
+          organizationId
+        }
+      });
+
+      return { updatedDeal, previousStage };
     });
-    res.status(201).json(deal);
+
+    const { updatedDeal, previousStage } = result;
+
+    // AI Forecast Integration using @google/genai
+    let aiForecast = {
+      winProbability: 50,
+      recommendations: [
+        "Mijozning ehtiyojlarini chuqurroq o'rganing va ularga moslashtirilgan yechim taklif qiling.",
+        "Keyingi uchrashuv sanasini aniqlashtiring va muzokaralarni rasmiylashtiring."
+      ]
+    };
+
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+    if (GEMINI_API_KEY) {
+      try {
+        const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+        const prompt = `
+Siz savdo bo'yicha ekspert va sun'iy intellekt yordamchisiz.
+Quyidagi bitim (deal) tafsilotlarini tahlil qiling va uning muvaffaqiyatli yakunlanish ehtimolini (Win Probability, 0-100%) baholang hamda savdo menejeriga o'zbek tilida 2 ta aniq, amaliy tavsiya bering.
+
+Bitim ma'lumotlari:
+- Bitim nomi: "${updatedDeal.title}"
+- Mijoz: "${updatedDeal.customer?.name || 'Noma\'lum'}"
+- Bitim qiymati: $${updatedDeal.value}
+- Yangi bosqich: "${stage}"
+- Oldingi bosqich: "${previousStage}"
+- O'tish izohi (eslatmalar): "${notes || 'Izoh qoldirilmagan'}"
+
+Javobingizni quyidagi formatda qaytaring (faqat JSON formatida, hech qanday qo'shimcha so'zlarsiz, quyidagi kalitlar bilan):
+{
+  "winProbability": <ehtimollik foizi, faqat son, masalan 75>,
+  "recommendations": [
+    "<o'zbek tilidagi 1-tavsiya>",
+    "<o'zbek tilidagi 2-tavsiya>"
+  ]
+}
+`;
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json'
+          }
+        });
+
+        const text = response.text;
+        if (text) {
+          const parsed = JSON.parse(text);
+          if (parsed && typeof parsed.winProbability === 'number' && Array.isArray(parsed.recommendations)) {
+            aiForecast = parsed;
+          }
+        }
+      } catch (aiError) {
+        console.error("Gemini Error:", aiError);
+        // Fail silently and use fallback defaults
+      }
+    }
+
+    // Trigger workflow engine triggers asynchronously
+    workflowEngine.trigger('DEAL_STAGE_CHANGED', {
+      deal: updatedDeal,
+      organizationId,
+      userId
+    }).catch(err => console.error('Workflow trigger failed:', err));
+
+    res.json({
+      deal: updatedDeal,
+      aiForecast
+    });
   } catch (error) {
-    if (error instanceof z.ZodError) res.status(400).json({ error: error.issues });
-    else if (error instanceof Error && error.message === 'CUSTOMER_NOT_FOUND') res.status(400).json({ error: 'Customer does not belong to this organization' });
-    else res.status(500).json({ error: 'Failed to create deal' });
-  }
-});
-
-router.patch('/:id', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const data = dealSchema.partial().parse(req.body);
-    await assertCustomerInOrganization(data.customerId, req.user!.organizationId);
-    const existing = await prisma.deal.findFirst({
-      where: { id: req.params.id, organizationId: req.user!.organizationId, deletedAt: null }
-    });
-    if (!existing) return res.status(404).json({ error: 'Deal not found' });
-
-    const deal = await prisma.deal.update({ where: { id: req.params.id }, data });
-    res.json(deal);
-  } catch (error) {
-    if (error instanceof z.ZodError) res.status(400).json({ error: error.issues });
-    else if (error instanceof Error && error.message === 'CUSTOMER_NOT_FOUND') res.status(400).json({ error: 'Customer does not belong to this organization' });
-    else res.status(500).json({ error: 'Failed to update deal' });
-  }
-});
-
-router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const existing = await prisma.deal.findFirst({
-      where: { id: req.params.id, organizationId: req.user!.organizationId, deletedAt: null }
-    });
-    if (!existing) return res.status(404).json({ error: 'Deal not found' });
-
-    await prisma.deal.update({ 
-      where: { id: req.params.id },
-      data: { deletedAt: new Date() }
-    });
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete deal' });
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: error.issues });
+    }
+    if (error instanceof Error && error.message === 'DEAL_NOT_FOUND') {
+      return res.status(404).json({ error: 'Deal not found' });
+    }
+    console.error('Update deal stage error:', error);
+    res.status(500).json({ error: 'Failed to update deal stage' });
   }
 });
 
